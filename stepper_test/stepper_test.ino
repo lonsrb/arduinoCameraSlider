@@ -1,11 +1,11 @@
 const int xJoystickPin     = A3;
-const int yJoystickPin     = A0;
-const int joystickClickPin = 13;
+const int yJoystickPin     = A0;//reset/abort
+const int joystickClickPin = 13;//spindle direction
 
 const int redLedPin         = A5;//12;
 const int encoderClickPin   = A4;//12;
-const int encoderDtPinB     = A1;  //pin B in example
-const int encoderSwPinA     = A2;  //pin A in example
+const int encoderDtPinB     = A1;//feed/hold  //pin B in example
+const int encoderSwPinA     = A2;//cyclestart/resume  //pin A in example
 int encoderPosCount = 0;
 int encoderPinALast;
 int encoderAVal;
@@ -111,7 +111,7 @@ void loop() {
             lastYStepTime = micros();
         }
         
-        if(playedBackXSteps >= recordedXSteps && playedBackYSteps >= recordedYSteps ){
+        if(playedBackXSteps >= abs(recordedXSteps) && playedBackYSteps >= abs(recordedYSteps)){
             isPlayingBack = false;
             startPositionSet = false;
             endPositionSet = false;
@@ -122,6 +122,13 @@ void loop() {
             lastXStepTime = 0;
             lastYStepTime = 0;
             Serial.println("finishedPlayback!");
+            digitalWrite(redLedPin, HIGH);
+            delay(50);
+            digitalWrite(redLedPin, LOW); 
+            delay(100);
+            digitalWrite(redLedPin, HIGH);
+            delay(250);
+            digitalWrite(redLedPin, LOW); 
         }
         
         return;
@@ -262,6 +269,20 @@ void checkEncoderButton() {
             // only toggle the LED if the new button state is HIGH
             if (encoderButtonState == HIGH) {
                 Serial.println("encoder button OFF");
+
+                digitalWrite(redLedPin, HIGH);
+                delay(100);
+                digitalWrite(redLedPin, LOW);  
+                delay(100);
+                digitalWrite(redLedPin, HIGH);
+                delay(100);
+                digitalWrite(redLedPin, LOW);  
+                delay(100);
+                digitalWrite(redLedPin, HIGH);
+                delay(100);
+                digitalWrite(redLedPin, LOW);  
+                encoderPosCount = 0;
+                
             }
             else {
                 Serial.println("encoder button ON");
@@ -298,7 +319,7 @@ void checkJoyStickButton() {
                 else if (startPositionSet == false) { //start recording
                     Serial.println("start recording");
                     digitalWrite(redLedPin, HIGH);
-                    delay(250);
+                    delay(200);
                     digitalWrite(redLedPin, LOW);    
                     recordedXSteps = 0;
                     recordedYSteps = 0;
@@ -309,6 +330,14 @@ void checkJoyStickButton() {
                     
                     returnToStartPosition(recordedXSteps, recordedYSteps);
                 } else { //if start and end are set start playblack
+                    digitalWrite(redLedPin, HIGH);
+                    delay(100);
+                    digitalWrite(redLedPin, LOW);    
+                    delay(100);
+                    digitalWrite(redLedPin, HIGH);
+                    delay(100);
+                    digitalWrite(redLedPin, LOW);    
+                    
                     Serial.println("start playback");
                     endPositionSet = false;
                     startPositionSet = false;
@@ -382,8 +411,8 @@ void playback(int xSteps, int ySteps) {
     Serial.println(xSteps);
     Serial.println("ySteps:");
     Serial.println(ySteps);
-    playbackXSpeedDelay = (playbackTotalMicros / xSteps) / 2;//divide by 2 again for high & low loop
-    playbackYSpeedDelay = (playbackTotalMicros / ySteps) / 2;//divide by 2 again for high & low loop
+    playbackXSpeedDelay = (playbackTotalMicros / abs(xSteps)) / 2;//divide by 2 again for high & low loop
+    playbackYSpeedDelay = (playbackTotalMicros / abs(ySteps)) / 2;//divide by 2 again for high & low loop
     Serial.println("playbackXSpeedDelay:");
     Serial.println(playbackXSpeedDelay);
     Serial.println("playbackYSpeedDelay:");
